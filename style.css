@@ -1,0 +1,198 @@
+/* ========================================================
+   VolleyScore - Custom Styles
+   ======================================================== */
+
+/* Tab navigation active state */
+.nav-tab {
+  color: #64748b;
+  border-bottom-color: transparent;
+}
+.nav-tab.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+  background-color: #f8fafc;
+}
+
+/* Set Tabs (セット切り替えボタン) */
+.set-tab-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.set-tab-btn.active {
+  background-color: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+}
+.set-tab-btn:not(.active) {
+  background-color: #334155;
+  color: #cbd5e1;
+}
+.set-tab-btn:not(.active):hover {
+  background-color: #475569;
+  color: #ffffff;
+}
+
+/* Notebook Container Paper Texture (手書きノート風の罫線背景) */
+.notebook-container {
+  background-color: #fffdfa;
+  background-image: 
+    linear-gradient(#f1e8dc 1px, transparent 1px);
+  background-size: 100% 32px;
+  line-height: 32px;
+  border-left: 4px solid #ef4444; /* ノート左のマージン線 */
+}
+
+/* Zigzag canvas area */
+#zigzag-canvas-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Point Bubble Styles (丸数字) */
+.point-bubble {
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  border: 2px solid #dc2626; /* 手書き赤ペンの赤 */
+  color: #dc2626;
+  background-color: #fffdfa;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 12px;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.15);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  z-index: 25;
+}
+
+.point-bubble:hover {
+  transform: scale(1.12);
+  background-color: #fef2f2;
+}
+
+.point-bubble.us-point {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.point-bubble.them-point {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+/* サーバー枠表示 [なな] などの四角囲み */
+.server-box {
+  display: inline-block;
+  border: 1.5px solid #dc2626;
+  color: #dc2626;
+  font-weight: bold;
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background-color: #fff;
+  line-height: normal;
+}
+
+/* 選手交代バッジ (りお -> まど) */
+.sub-event-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  color: #92400e;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(245, 158, 11, 0.15);
+}
+
+/* プレー内容テキスト (かなSP, ちづSPM等) - 折れ線の外側に配置 */
+.play-detail-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: #b91c1c;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* チップ選択UI (モーダル内) */
+.chip-select-btn {
+  border: 1px solid #cbd5e1;
+  background-color: #f8fafc;
+  color: #334155;
+  border-radius: 8px;
+  padding: 8px 6px;
+  text-align: center;
+  font-weight: 600;
+  transition: all 0.12s ease;
+}
+.chip-select-btn:active {
+  transform: scale(0.96);
+}
+.chip-select-btn.selected {
+  background-color: #2563eb;
+  color: #ffffff;
+  border-color: #1d4ed8;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+}
+
+.chip-select-btn.action-kill {
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+.chip-select-btn.action-kill.selected {
+  background-color: #2563eb;
+  color: #fff;
+}
+
+.chip-select-btn.action-mistake {
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+.chip-select-btn.action-mistake.selected {
+  background-color: #dc2626;
+  color: #fff;
+}
+
+/* 選手交代の選択チップ */
+.sub-chip-out.selected {
+  background-color: #e11d48 !important;
+  color: #ffffff !important;
+  border-color: #be123c !important;
+}
+.sub-chip-in.selected {
+  background-color: #059669 !important;
+  color: #ffffff !important;
+  border-color: #047857 !important;
+}
+
+/* ボタンのアクティブエフェクト */
+.score-action-btn:active {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 印刷用スタイル */
+@media print {
+  header, nav, #set-tabs-container, #btn-add-set, #btn-us-point, #btn-them-point, #btn-undo, #btn-open-substitution, #btn-copy-stats, #btn-print-note {
+    display: none !important;
+  }
+  body {
+    background-color: #fff !important;
+    padding: 0 !important;
+  }
+  .tab-content {
+    display: block !important;
+  }
+  .notebook-container {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    page-break-after: always;
+  }
+}
