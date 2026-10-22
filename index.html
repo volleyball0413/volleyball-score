@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>VolleyScore - バレーボール スコア＆スタッツ記録</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            },
+            court: '#f8fafc',
+            noteRed: '#dc2626',
+            noteBlue: '#2563eb',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col font-sans select-none pb-20">
+
+  <!-- ========================================== -->
+  <!-- Header: 保存・新規試合・試合一覧・選手登録・設定が同じ欄に並ぶ！ -->
+  <!-- ========================================== -->
+  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-4xl mx-auto px-3 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <!-- 左側: タイトル & 試合情報 -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="text-xl">🏐</span>
+          <div>
+            <h1 class="text-base font-bold tracking-tight flex items-center gap-1.5">
+              VolleyScore
+              <span class="text-[10px] font-normal bg-blue-500/30 text-blue-300 px-1.5 py-0.2 rounded border border-blue-400/30">アナリスト</span>
+            </h1>
+            <p id="match-header-info" class="text-xs text-slate-300 truncate max-w-[220px] sm:max-w-none">
+              新規試合
+            </p>
+          </div>
+        </div>
+        <!-- スマホ用共有アイコン -->
+        <button id="btn-github-help-mobile" class="sm:hidden text-slate-300 hover:text-white p-1" title="共有方法">
+          <i data-lucide="share-2" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- 右側: 保存と新規試合と同じ欄に「試合一覧」「選手登録」「設定」のボタンを配置！ -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:pb-0">
+        <!-- 1. 保存 -->
+        <button id="btn-header-save-match" title="現在の試合を保存" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 transition shadow-sm shrink-0 active:scale-95">
+          <i data-lucide="save" class="w-3.5 h-3.5"></i>
+          <span>保存</span>
+        </button>
+
+        <!-- 2. 新規試合 -->
+        <button id="btn-header-new-match" title="新しい試合を始める" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 transition shadow-sm shrink-0 active:scale-95">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          <span>新規試合</span>
+        </button>
+
+        <!-- 3. 試合一覧 (NEW!) -->
+        <button id="btn-header-matches" title="保存された過去の試合一覧" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 transition shadow-sm shrink-0 active:scale-95">
+          <i data-lucide="folder-archive" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span>試合一覧</span>
+        </button>
+
+        <!-- 4. 選手登録 (NEW!) -->
+        <button id="btn-header-roster" title="チーム選手登録名簿" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 transition shadow-sm shrink-0 active:scale-95">
+          <i data-lucide="users" class="w-3.5 h-3.5 text-blue-400"></i>
+          <span>選手登録</span>
+        </button>
+
+        <!-- 5. 設定 (NEW!) -->
+        <button id="btn-header-settings" title="試合・セットの設定" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 transition shadow-sm shrink-0 active:scale-95">
+          <i data-lucide="settings" class="w-3.5 h-3.5 text-slate-300"></i>
+          <span>設定</span>
+        </button>
+
+        <!-- PC用共有ボタン -->
+        <button id="btn-github-help" title="GitHub Pagesでの共有方法" class="hidden sm:flex text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2 py-1.5 rounded-lg items-center gap-1 transition shrink-0">
+          <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+          <span>共有</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- Set Navigation Bar (セット切り替えバー) -->
+  <!-- ========================================== -->
+  <div class="bg-slate-800 text-white border-t border-slate-700 px-3 py-1.5 shadow-inner">
+    <div class="max-w-4xl mx-auto flex items-center justify-between gap-2 overflow-x-auto">
+      <div class="flex items-center gap-1.5" id="set-tabs-container">
+        <!-- JSで動的生成: Set 1, Set 2, Set 3... -->
+      </div>
+      <button id="btn-add-set" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md font-medium flex items-center gap-1 transition shrink-0 border border-slate-600">
+        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+        <span>セット追加</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- Navigation Tabs (スッキリ3大タブのみ！) -->
+  <!-- ========================================== -->
+  <nav class="bg-white border-b border-slate-200 sticky top-[80px] sm:top-[53px] z-30 shadow-sm">
+    <div class="max-w-4xl mx-auto px-2 flex justify-around">
+      <button class="nav-tab active flex-1 py-3 text-center text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 border-b-2 transition" data-tab="tab-record">
+        <i data-lucide="edit-3" class="w-4 h-4"></i>
+        <span>記録・入力</span>
+      </button>
+      <button class="nav-tab flex-1 py-3 text-center text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 border-b-2 transition" data-tab="tab-notebook">
+        <i data-lucide="git-commit" class="w-4 h-4"></i>
+        <span>ジグザグ推移</span>
+      </button>
+      <button class="nav-tab flex-1 py-3 text-center text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 border-b-2 transition" data-tab="tab-stats">
+        <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+        <span>スタッツ集計</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ========================================== -->
+  <!-- Main Container -->
+  <!-- ========================================== -->
+  <main class="max-w-4xl mx-auto w-full px-3 py-3 flex-1">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: リアルタイム記録画面 (Record) -->
+    <!-- ========================================== -->
+    <div id="tab-record" class="tab-content space-y-3">
+      <!-- Live Score Board -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+        <div class="grid grid-cols-5 items-center text-center">
+          <!-- 自チーム -->
+          <div class="col-span-2">
+            <div id="display-team-name" class="text-xs sm:text-sm font-bold text-blue-700 truncate mb-1">自チーム</div>
+            <div id="score-us" class="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">0</div>
+            <div id="us-serve-badge" class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full invisible">
+              <span>🏐 サーブ中</span>
+            </div>
+          </div>
+
+          <!-- VS / セット情報 -->
+          <div class="col-span-1 flex flex-col items-center">
+            <span class="text-xs font-semibold text-slate-600 uppercase tracking-widest">VS</span>
+            <span id="display-set-number" class="text-xs font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full mt-1">Set 1</span>
+            <div id="display-lead" class="text-[10px] text-slate-600 mt-1">同点</div>
+          </div>
+
+          <!-- 相手チーム -->
+          <div class="col-span-2">
+            <div id="display-opponent-name" class="text-xs sm:text-sm font-bold text-red-700 truncate mb-1">相手チーム</div>
+            <div id="score-them" class="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">0</div>
+            <div id="them-serve-badge" class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full invisible">
+              <span>🏐 サーブ中</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- サーバー・選手交代・Undo アクションバー -->
+        <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="flex items-center gap-1.5">
+            <span class="text-slate-600 font-medium">サーバー:</span>
+            <span id="current-server-display" class="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+              [未設定]
+            </span>
+            <button id="btn-manual-rotate" class="text-[11px] text-blue-600 hover:text-blue-800 underline ml-1" title="手動でローテーションを進める">
+              ローテ送り
+            </button>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <!-- 選手交代ボタン -->
+            <button id="btn-open-substitution" class="flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white font-bold px-2.5 py-1 rounded-lg text-xs shadow-sm transition active:scale-95">
+              <i data-lucide="arrow-left-right" class="w-3.5 h-3.5"></i>
+              <span>選手交代</span>
+            </button>
+            <!-- 1手戻すボタン -->
+            <button id="btn-undo" class="flex items-center gap-1 text-slate-600 hover:text-red-600 bg-slate-100 hover:bg-red-50 border border-slate-200 px-2.5 py-1 rounded-lg text-xs font-medium transition disabled:opacity-30 disabled:pointer-events-none" disabled>
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>1手戻す</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- コート上の現在6名配置 (交代反映) -->
+      <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-200">
+        <div class="text-[11px] font-semibold text-slate-600 mb-2 flex items-center justify-between">
+          <span>コート上の配置 (P1〜P6) ・ タップでサーバー直接変更</span>
+          <span class="text-[10px] text-amber-700 font-normal">枠線 = 現在のサーバー</span>
+        </div>
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center" id="rotation-players-grid">
+          <!-- JSで動的生成 -->
+        </div>
+      </div>
+
+      <!-- メイン入力ボタンエリア（特大タップボタン） -->
+      <div class="grid grid-cols-2 gap-3 pt-1">
+        <!-- 自チーム得点ボタン -->
+        <button id="btn-us-point" class="score-action-btn bg-gradient-to-b from-blue-500 to-blue-600 active:from-blue-600 active:to-blue-700 text-white rounded-2xl p-4 shadow-md border-b-4 border-blue-700 flex flex-col items-center justify-center gap-1 transition active:translate-y-0.5">
+          <div class="flex items-center gap-1 text-xs font-semibold text-blue-100">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>自チーム得点</span>
+          </div>
+          <div class="text-xl sm:text-2xl font-black tracking-tight">自得点 (+1)</div>
+          <div class="text-[11px] text-blue-100 opacity-90">決定・相手ミスを記録</div>
+        </button>
+
+        <!-- 相手チーム得点ボタン -->
+        <button id="btn-them-point" class="score-action-btn bg-gradient-to-b from-rose-500 to-rose-600 active:from-rose-600 active:to-rose-700 text-white rounded-2xl p-4 shadow-md border-b-4 border-rose-700 flex flex-col items-center justify-center gap-1 transition active:translate-y-0.5">
+          <div class="flex items-center gap-1 text-xs font-semibold text-rose-100">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>相手得点 (失点)</span>
+          </div>
+          <div class="text-xl sm:text-2xl font-black tracking-tight">相手得点 (+1)</div>
+          <div class="text-[11px] text-rose-100 opacity-90">ミス・相手決定を記録</div>
+        </button>
+      </div>
+
+      <!-- ラリー履歴リスト（途中編集・削除機能付き！） -->
+      <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-200">
+        <div class="text-xs font-bold text-slate-700 mb-2 flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span>ラリー・イベント履歴</span>
+            <span class="text-[10px] text-blue-600 font-normal">✏️タップでいつでも編集・修正可能</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] text-slate-600" id="total-rallies-count">合計 0 ラリー</span>
+            <button id="btn-toggle-all-rallies" class="text-[11px] text-blue-600 hover:text-blue-800 underline font-medium">
+              すべて表示
+            </button>
+          </div>
+        </div>
+        <div id="recent-rallies-list" class="space-y-1.5 text-xs text-slate-600 max-h-96 overflow-y-auto">
+          <div class="text-center py-2 text-slate-600">まだラリーが記録されていません</div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- TAB 2: ジグザグ推移ノート (Notebook) -->
+    <!-- ========================================== -->
+    <div id="tab-notebook" class="tab-content hidden space-y-3">
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 flex items-center justify-between">
+        <div>
+          <span class="font-bold">手書きノート再現ビュー:</span>
+          中央の赤い折れ線に対して、丸数字と選手名が線の外側に整然と並びます。（タップで修正可能）
+        </div>
+        <button id="btn-print-note" class="bg-white hover:bg-amber-100 text-amber-800 border border-amber-300 px-2 py-1 rounded text-[11px] font-medium flex items-center gap-1">
+          <i data-lucide="download" class="w-3 h-3"></i>
+          画像/印刷
+        </button>
+      </div>
+
+      <div class="notebook-container bg-white rounded-2xl shadow-md border border-slate-300 p-3 sm:p-4 overflow-x-auto relative">
+        <div class="border-b-2 border-red-300 pb-2 mb-3 flex items-center justify-between text-red-700 font-bold">
+          <div class="flex items-center gap-2 sm:gap-3">
+            <span id="note-title-date" class="text-base sm:text-lg">10/18</span>
+            <span id="note-title-vs" class="text-base sm:text-lg">vs 上智</span>
+            <span id="note-title-set" class="w-6 h-6 rounded-full border-2 border-red-600 inline-flex items-center justify-center text-xs">①</span>
+          </div>
+          <div class="text-xs font-semibold text-slate-700">
+            自得点: <span id="note-final-us" class="font-bold text-red-700 text-sm">0</span> - 相手: <span id="note-final-them" class="font-bold text-red-700 text-sm">0</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 text-[11px] font-bold pb-2 border-b border-slate-200 text-slate-500 mb-2">
+          <div class="text-left pl-2">自チーム得点 (←名前・プレー ｜ 丸数字①)</div>
+          <div class="text-right pr-2">(丸数字① ｜ 名前・プレー→) 相手チーム得点</div>
+        </div>
+
+        <div id="zigzag-canvas-container" class="relative min-h-[400px] w-full" style="min-width: 320px;">
+          <svg id="zigzag-svg" class="absolute top-0 left-0 w-full h-full pointer-events-none z-10"></svg>
+          <div id="zigzag-nodes-container" class="relative z-20"></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- TAB 3: スタッツ集計 (Stats) -->
+    <!-- ========================================== -->
+    <div id="tab-stats" class="tab-content hidden space-y-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-blue-100 flex flex-col justify-between">
+          <div>
+            <div class="text-[11px] font-bold text-blue-600 tracking-wide uppercase flex items-center gap-1">
+              <span>相手サーブ時</span>
+              <span class="text-[10px] font-normal text-slate-600">(相)</span>
+            </div>
+            <div class="text-xs font-semibold text-slate-700 mt-0.5">サイドアウト率</div>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <div id="stat-sideout-rate" class="text-3xl sm:text-4xl font-black text-blue-700">0.0%</div>
+          </div>
+          <div class="mt-1 text-xs text-slate-600 font-medium flex items-center justify-between border-t border-slate-100 pt-1.5">
+            <span>成功 / 機会:</span>
+            <span id="stat-sideout-fraction" class="font-bold text-slate-700">0 / 0</span>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 flex flex-col justify-between">
+          <div>
+            <div class="text-[11px] font-bold text-emerald-600 tracking-wide uppercase flex items-center gap-1">
+              <span>自チームサーブ時</span>
+              <span class="text-[10px] font-normal text-slate-600">(自)</span>
+            </div>
+            <div class="text-xs font-semibold text-slate-700 mt-0.5">ブレイク率 (連続得点)</div>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <div id="stat-break-rate" class="text-3xl sm:text-4xl font-black text-emerald-700">0.0%</div>
+          </div>
+          <div class="mt-1 text-xs text-slate-600 font-medium flex items-center justify-between border-t border-slate-100 pt-1.5">
+            <span>連続得点 / 機会:</span>
+            <span id="stat-break-fraction" class="font-bold text-slate-700">0 / 0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ローテーション別 得失点表 -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+            <span>ローテーション・サーバー別 得失点表</span>
+            <span class="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-normal">ノート右下の表</span>
+          </h3>
+          <span class="text-xs text-slate-600">W=得点 / L=失点</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-center border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-y border-slate-200 text-slate-600">
+                <th class="py-2 px-2 text-left font-semibold">ローテ選手</th>
+                <th colspan="2" class="py-1 px-1 bg-blue-50/70 border-x border-slate-200 text-blue-800 font-bold">相 (相手サーブ時)</th>
+                <th colspan="2" class="py-1 px-1 bg-emerald-50/70 text-emerald-800 font-bold">自 (自チームサーブ時)</th>
+              </tr>
+              <tr class="bg-slate-50/50 border-b border-slate-200 text-[11px] text-slate-600">
+                <th class="py-1 px-2 text-left"></th>
+                <th class="py-1 px-1 bg-blue-50/40 text-blue-700">W (得点)</th>
+                <th class="py-1 px-1 bg-blue-50/40 border-r border-slate-200 text-slate-600">L (失点)</th>
+                <th class="py-1 px-1 bg-emerald-50/40 text-emerald-700">W (得点)</th>
+                <th class="py-1 px-1 bg-emerald-50/40 text-slate-600">L (失点)</th>
+              </tr>
+            </thead>
+            <tbody id="stats-rotation-table-body" class="divide-y divide-slate-100"></tbody>
+            <tfoot>
+              <tr id="stats-rotation-table-foot" class="bg-slate-100 font-bold text-slate-800 border-t-2 border-slate-300"></tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- 選手別 個人スタッツ表 -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+        <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center justify-between">
+          <span>選手別 個人スタッツ内訳</span>
+          <span class="text-xs text-slate-600 font-normal">差引 = 得点 - 失点</span>
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-center border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-y border-slate-200 text-slate-600 text-[11px]">
+                <th class="py-2 px-2 text-left font-semibold">選手名</th>
+                <th class="py-2 px-1 text-blue-700 font-bold">得点(W)</th>
+                <th class="py-2 px-1 text-rose-700 font-bold">失点(L)</th>
+                <th class="py-2 px-1 font-bold">差引</th>
+                <th class="py-2 px-1 text-slate-600">SP</th>
+                <th class="py-2 px-1 text-slate-600">SA</th>
+                <th class="py-2 px-1 text-slate-600">BP</th>
+                <th class="py-2 px-1 text-slate-600">ミス内訳</th>
+              </tr>
+            </thead>
+            <tbody id="stats-player-table-body" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button id="btn-copy-stats" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs py-2.5 px-3 rounded-xl shadow flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="clipboard-copy" class="w-4 h-4"></i>
+          <span>結果テキストをコピー (LINE・メモ用)</span>
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL 1: 試合一覧モーダル (ヘッダーから直接開く！) -->
+  <!-- ========================================== -->
+  <div id="modal-matches-archive" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-1.5">
+          <i data-lucide="folder-archive" class="w-5 h-5 text-amber-500"></i>
+          <span>保存された過去の試合一覧 (履歴)</span>
+        </h3>
+        <button id="btn-close-matches-modal" class="text-slate-600 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 現在の試合カード -->
+      <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-xl p-3.5 shadow-sm space-y-2.5">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-[9px] font-bold uppercase tracking-wider bg-blue-500/30 text-blue-300 px-1.5 py-0.5 rounded-full border border-blue-400/30">現在編集中</span>
+            <h4 id="current-match-title" class="text-sm font-bold mt-1 text-white">10/18 vs 上智</h4>
+            <p id="current-match-subtitle" class="text-[11px] text-slate-300 mt-0.5">全 1 セット記録中</p>
+          </div>
+          <button id="btn-save-current-to-archive" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 shadow transition active:scale-95">
+            <i data-lucide="save" class="w-3.5 h-3.5"></i>
+            <span>この試合を保存</span>
+          </button>
+        </div>
+        <button id="btn-copy-share-url" class="w-full bg-slate-700/80 hover:bg-slate-700 text-slate-200 text-xs py-1.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="link" class="w-3.5 h-3.5 text-blue-400"></i>
+          <span>この試合の共有リンクをコピー (LINE用)</span>
+        </button>
+      </div>
+
+      <!-- 過去の試合カード一覧 -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1">
+          <span>保存データ一覧</span>
+          <span id="saved-matches-count-badge" class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">0試合</span>
+        </div>
+        <div id="saved-matches-list-container" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+          <!-- JSで動的生成 -->
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-100 flex justify-end">
+        <button id="btn-close-matches-modal-bottom" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-2 px-4 rounded-xl font-medium transition">
+          閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 2: 選手登録名簿モーダル (ヘッダーから直接開く！) -->
+  <!-- ========================================== -->
+  <div id="modal-roster" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-1.5">
+          <i data-lucide="users" class="w-5 h-5 text-blue-600"></i>
+          <span>チーム選手登録名簿</span>
+        </h3>
+        <button id="btn-close-roster-modal" class="text-slate-600 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 選手登録フォーム -->
+      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+        <div class="text-xs font-bold text-slate-700">新しい選手を追加</div>
+        <form id="form-add-player" class="grid grid-cols-12 gap-2 items-end">
+          <div class="col-span-3 sm:col-span-3">
+            <label class="block text-[10px] font-medium text-slate-600 mb-0.5">背番号</label>
+            <input type="number" id="input-player-number" placeholder="例: 1" min="0" max="99" class="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+          <div class="col-span-6 sm:col-span-6">
+            <label class="block text-[10px] font-medium text-slate-600 mb-0.5">選手名 <span class="text-rose-500">*</span></label>
+            <input type="text" id="input-player-name" placeholder="例: なな" required class="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs font-bold bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+          <div class="col-span-3 sm:col-span-3">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-1.5 rounded-lg shadow-sm transition active:scale-95 flex items-center justify-center gap-1">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>登録</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- 登録名簿リスト -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1">
+          <div class="flex items-center gap-2">
+            <span>登録済み選手</span>
+            <span id="roster-count-badge" class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">0名</span>
+          </div>
+          <button id="btn-reset-roster" class="text-[11px] text-slate-600 hover:text-slate-600 underline font-normal">
+            初期メンバーに戻す
+          </button>
+        </div>
+        <div id="roster-list-container" class="divide-y divide-slate-100 border border-slate-200 rounded-xl max-h-60 overflow-y-auto">
+          <!-- JSで動的生成 -->
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-100 flex justify-end">
+        <button id="btn-close-roster-modal-bottom" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-2 px-4 rounded-xl font-medium transition">
+          閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 3: 試合・セット設定モーダル (ヘッダーから直接開く！) -->
+  <!-- ========================================== -->
+  <div id="modal-settings" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-1.5">
+          <i data-lucide="settings" class="w-5 h-5 text-slate-600"></i>
+          <span>試合・セットの設定 (途中で変更可能)</span>
+        </h3>
+        <button id="btn-close-settings-modal" class="text-slate-600 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 基本情報 -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">日付</label>
+          <input type="text" id="setting-date" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">対戦相手</label>
+          <input type="text" id="setting-opponent" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">自チーム名</label>
+          <input type="text" id="setting-my-team" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-700 mb-1">現在のセットの先攻サーブ</label>
+        <select id="setting-first-serve" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-xs">
+          <option value="us">自チーム先攻</option>
+          <option value="them">相手チーム先攻</option>
+        </select>
+      </div>
+
+      <!-- スタメン6名設定 -->
+      <div class="pt-2 border-t border-slate-100">
+        <label class="block text-xs font-bold text-slate-800 mb-1.5">現在のセットの先発6名 (スタメン配置)</label>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs" id="starting-lineup-selectors">
+          <!-- JSで動的生成 -->
+        </div>
+      </div>
+
+      <button id="btn-save-settings" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 rounded-xl transition shadow-sm">
+        設定変更を反映して保存
+      </button>
+
+      <!-- バックアップ & リセット -->
+      <div class="pt-3 border-t border-slate-200 space-y-2 text-xs">
+        <div class="font-bold text-slate-700">データバックアップ & リセット</div>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="btn-export-json" class="border border-slate-300 hover:bg-slate-50 text-slate-700 py-1.5 px-2 rounded-lg font-medium flex items-center justify-center gap-1 transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>JSON保存</span>
+          </button>
+          <label class="border border-slate-300 hover:bg-slate-50 text-slate-700 py-1.5 px-2 rounded-lg font-medium flex items-center justify-center gap-1 cursor-pointer transition">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+            <span>JSON読込</span>
+            <input type="file" id="file-import-json" accept=".json" class="hidden">
+          </label>
+        </div>
+        <button id="btn-reset-current-set" class="w-full border border-amber-300 text-amber-700 hover:bg-amber-50 py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          <span>現在のセットのスコアを0-0にリセット</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: ラリー途中編集モーダル -->
+  <!-- ========================================== -->
+  <div id="modal-edit-rally" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <h3 class="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+          <i data-lucide="edit" class="w-4 h-4 text-blue-600"></i>
+          <span id="edit-rally-title">ラリーの編集</span>
+        </h3>
+        <button id="btn-close-edit-modal" class="text-slate-600 hover:text-slate-600">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1.5">得点チーム</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="btn-edit-winner-us" class="p-2.5 rounded-lg border text-center font-bold transition">
+              自チーム得点
+            </button>
+            <button type="button" id="btn-edit-winner-them" class="p-2.5 rounded-lg border text-center font-bold transition">
+              相手チーム得点
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1.5">関与選手</label>
+          <div id="edit-player-chips" class="grid grid-cols-3 sm:grid-cols-4 gap-1.5 max-h-32 overflow-y-auto p-1 bg-slate-50 rounded-lg border border-slate-200"></div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1.5">プレー内容 (略記)</label>
+          <div id="edit-action-chips" class="grid grid-cols-3 sm:grid-cols-4 gap-1.5"></div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">メモ (任意)</label>
+          <input type="text" id="edit-action-memo" placeholder="メモ" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2 border-t border-slate-100">
+        <button type="button" id="btn-delete-rally-confirm" class="text-rose-600 hover:bg-rose-50 border border-rose-200 px-3 py-2 rounded-xl text-xs font-bold transition">
+          このラリーを削除
+        </button>
+        <button type="button" id="btn-cancel-edit" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-2 rounded-xl font-medium transition">
+          キャンセル
+        </button>
+        <button type="button" id="btn-save-rally-edit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 rounded-xl font-bold transition shadow-sm">
+          変更を保存して再計算
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: 新規試合作成モーダル -->
+  <!-- ========================================== -->
+  <div id="modal-new-match" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-3.5 animate-in fade-in duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <h3 class="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+          <i data-lucide="calendar" class="w-4 h-4 text-blue-600"></i>
+          新しい試合を始める
+        </h3>
+        <button id="btn-close-new-match-modal" class="text-slate-600 hover:text-slate-600">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">日付</label>
+          <input type="text" id="new-match-date" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="例: 10/22">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">対戦相手</label>
+          <input type="text" id="new-match-opponent" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="例: 上智大学">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">第1セット 先攻サーブ</label>
+          <select id="new-match-first-serve" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 bg-white">
+            <option value="us">自チーム先攻</option>
+            <option value="them">相手チーム先攻</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button id="btn-cancel-new-match" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-2.5 rounded-xl font-medium transition">
+          キャンセル
+        </button>
+        <button id="btn-confirm-new-match" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-2.5 rounded-xl font-bold transition shadow-sm">
+          試合を開始する
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: 選手交代モーダル -->
+  <!-- ========================================== -->
+  <div id="modal-substitution" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-4 animate-in fade-in duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <h3 class="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+          <i data-lucide="arrow-left-right" class="w-4 h-4 text-amber-500"></i>
+          選手交代 (サブスティチュエーション)
+        </h3>
+        <button id="btn-close-sub-modal" class="text-slate-600 hover:text-slate-600">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-rose-700 mb-1.5">OUT: ベンチに下がる選手 (コート上の6名)</label>
+          <div id="sub-out-player-chips" class="grid grid-cols-3 gap-1.5"></div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-emerald-700 mb-1.5">IN: コートに入る選手 (登録選手名簿)</label>
+          <div id="sub-in-player-chips" class="grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto p-1 bg-slate-50 rounded-lg border border-slate-200"></div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button id="btn-cancel-sub" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-2.5 rounded-xl font-medium transition">
+          キャンセル
+        </button>
+        <button id="btn-confirm-sub" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-xs py-2.5 rounded-xl font-bold transition shadow-sm" disabled>
+          交代を実行する
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: ラリー詳細入力モーダル (新規入力) -->
+  <!-- ========================================== -->
+  <div id="modal-point-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
+    <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-2xl p-4 sm:p-5 shadow-2xl max-h-[90vh] overflow-y-auto space-y-3.5 animate-in slide-in-from-bottom duration-200">
+      
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <div class="flex items-center gap-2">
+          <div id="modal-point-badge" class="px-2.5 py-1 rounded-full text-xs font-bold text-white bg-blue-600">
+            自チーム得点 (+1)
+          </div>
+          <span class="text-xs text-slate-600 font-medium" id="modal-server-info">サーバー: 未設定</span>
+        </div>
+        <button id="btn-close-modal" class="text-slate-600 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+          <span>関与した選手</span>
+          <span class="text-[10px] text-slate-600 font-normal">決めた人 / ミスした人</span>
+        </label>
+        <div id="modal-player-chips" class="grid grid-cols-3 sm:grid-cols-4 gap-1.5 text-xs"></div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1.5">プレー内容 (略記)</label>
+        <div id="modal-action-chips" class="grid grid-cols-3 sm:grid-cols-4 gap-1.5 text-xs"></div>
+      </div>
+
+      <div>
+        <input type="text" id="modal-action-memo" placeholder="メモ (例: フェイント、まおつなぎM など任意)" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+      </div>
+
+      <div class="flex gap-2 pt-1">
+        <button id="btn-quick-confirm" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-2.5 rounded-xl font-medium transition">
+          詳細なしで記録
+        </button>
+        <button id="btn-detail-confirm" class="flex-[2] bg-blue-600 hover:bg-blue-700 text-white text-xs py-2.5 rounded-xl font-bold shadow-md transition">
+          この内容で記録する
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: GitHub Pages 公開手順ガイド -->
+  <!-- ========================================== -->
+  <div id="modal-github-guide" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl p-5 shadow-2xl max-h-[85vh] overflow-y-auto space-y-3.5">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <h3 class="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+          <i data-lucide="github" class="w-4 h-4"></i>
+          GitHub Pagesでリンク共有する方法
+        </h3>
+        <button id="btn-close-github-guide" class="text-slate-600 hover:text-slate-600">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-600 space-y-2.5 leading-relaxed">
+        <p>このアプリはサーバー不要で動くため、GitHubに投稿するだけで即座にWebアプリとして無料公開できます！</p>
+        
+        <ol class="list-decimal pl-4 space-y-2 font-medium text-slate-700">
+          <li>
+            <strong>GitHubで新しいリポジトリを作成</strong><br>
+            <span class="text-slate-600 font-normal">GitHubで「New repository」を押し、名前（例: <code class="bg-slate-100 px-1 rounded">volley-score</code>）を入力して作成します（Publicを選択）。</span>
+          </li>
+          <li>
+            <strong>このアプリのファイルをアップロード (Push)</strong><br>
+            <span class="text-slate-600 font-normal"><code class="bg-slate-100 px-1 rounded">index.html</code>, <code class="bg-slate-100 px-1 rounded">style.css</code>, <code class="bg-slate-100 px-1 rounded">app.js</code> をリポジトリにアップロードします。</span>
+          </li>
+          <li>
+            <strong>GitHub Pagesを有効化する</strong><br>
+            <span class="text-slate-600 font-normal">リポジトリの <strong>Settings</strong> ➔ <strong>Pages</strong> を開き、Branch を「<code class="bg-slate-100 px-1 rounded">main</code>」にして「Save」をクリックします。</span>
+          </li>
+          <li>
+            <strong>発行されたURLをチームに共有！</strong><br>
+            <span class="text-slate-600 font-normal">1分ほどで専用のURL（例: <code class="text-blue-600 bg-blue-50 px-1 rounded">https://ユーザー名.github.io/volley-score/</code>）が発行されます。そのリンクをLINE等で送るだけで、全員がスマホで使えます！</span>
+          </li>
+        </ol>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-2.5 text-[11px] text-blue-800">
+          💡 <strong>オフライン対応:</strong> 一度ブラウザで開けば、体育館で電波が繋がりにくくても端末内に保存（localStorage）され、問題なく記録できます。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="app.js"></script>
+</body>
+</html>
